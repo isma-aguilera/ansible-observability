@@ -1,2 +1,2 @@
 # ansible-observability
-Playbooks Ansiblepara instalacion de Grafana, Prometheus y Node_exporter
+Playbooks de Ansible para instalacion de Grafana, Prometheus y Node_exporter
