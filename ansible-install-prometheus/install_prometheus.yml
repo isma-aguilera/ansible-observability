@@ -1,0 +1,127 @@
+---
+- name: Playbook Ansible para instalacion de Prometheus.
+  hosts: all
+  become: true
+  vars:
+    download_prometheus: https://github.com/prometheus/prometheus/releases/download/v2.34.0/prometheus-2.34.0.linux-amd64.tar.gz
+  tasks:
+    - name: Agregar usuario Prometheus.
+      user:
+        name: prometheus
+        shell: /bin/false
+        system: true
+        create_home: no
+
+    - name: Crear carpeta Prometheus	
+      file:
+        path: /etc/prometheus
+        state: directory
+        mode: '0755'
+
+    - name: Crear carpeta BD Promethus
+      file:
+        path: /var/lib/prometheus
+        state: directory
+        mode: '0755'
+        owner: prometheus
+        group: prometheus
+
+    - name: Descargar y extraer.
+      unarchive:
+        src: {{ download_prometheus }}
+        dest: /tmp
+        remote_src: yes
+
+    - name: Copiar binarios promtool al /usr/local/bin
+      copy:
+        src: /tmp/prometheus-2.34.0.linux-amd64/promtool
+        dest: /usr/local/bin/
+        remote_src: yes
+        mode: u+x,g+x,o+x
+
+    - name: Copiar binarios prometheus al /usr/local/bin
+      copy:
+        src: /tmp/prometheus-2.34.0.linux-amd64/prometheus
+        dest: /usr/local/bin/
+        remote_src: yes
+        mode: u+x,g+x,o+x
+
+    - name: Crear archivo de conf Prometheus.yml
+      file:
+        path: /etc/prometheus/prometheus.yml
+        state: touch
+        owner: prometheus
+        group: prometheus
+        mode: u=rw,g=rw,o=r
+
+    - name: Crear archivo de conf de servicio Prometheus
+      file:
+        path: /etc/systemd/system/prometheus.service
+        state: touch
+        mode: u=rw,g=rw,o=r
+
+    - name: Cargar conf prometheus.yml 
+      blockinfile:
+        path: /etc/prometheus/prometheus.yml 
+        owner: prometheus
+        group: prometheus
+        mode: u+x,g+x,o+x
+        block: |
+          global:
+            scrape_interval: 15s 
+            evaluation_interval: 15s
+            scrape_timeout: 15s  
+          scrape_configs:
+            - job_name: 'prometheus'
+              static_configs:
+              - targets: ['localhost:9090','192.168.98.147:9100']
+
+    - name: Cargar conf de servicio Prometheus.
+      blockinfile:
+        path: /etc/systemd/system/prometheus.service
+        state: present
+        block: |
+          Description=Prometheus Time Series Collection and Processing Server
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Type=simple
+          ExecStart=/usr/local/bin/prometheus \
+             --config.file /etc/prometheus/prometheus.yml \
+             --storage.tsdb.path /var/lib/prometheus/ \
+             --storage.tsdb.retention.time=30d \
+             --web.console.templates=/etc/prometheus/consoles \
+             --web.console.libraries=/etc/prometheus/console_libraries
+
+          [Install]
+          WantedBy=multi-user.target 
+
+    - name: Systemctl reload
+      systemd: 
+        daemon_reload: yes
+
+    - name: Iniciar servicios Prometheus
+      systemd:
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Agregar permisos al puerto en el firewall.
+      firewalld:
+        port: 9090/tcp
+        permanent: yes
+        state: enabled
+
+    - name: Forzar cambios en el firewall.
+      systemd:
+        name: firewalld
+        state: reloaded
+  
+    - name: Chequear que el puerto 9090 este disponible.
+      wait_for:
+        port: 9090
+        state: started
+        timeout: 10
