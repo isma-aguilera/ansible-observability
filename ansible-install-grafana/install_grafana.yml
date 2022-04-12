@@ -1,26 +1,5 @@
 ---
-- name: Playbook Ansible para instalacion de Grafana.
+- name: Playbok para instalar grafana.
   hosts: all
-  tasks:
-    - name: Instalar Grafana.
-      yum:
-        name: https://dl.grafana.com/enterprise/release/grafana-enterprise-8.4.4-1.x86_64.rpm
-        state: present
-
-    - name: Iniciar servicios.
-      systemd:
-        name: grafana-server
-        state: started
-        enabled: yes
-
-    - name: Agregar permisos en el firewall.
-      firewalld:
-        port: 3000/tcp
-        permanent: yes
-        state: enabled
-
-    - name: Forzar cambios en el firewall.
-      systemd:
-        name: firewalld
-        state: reloaded
-  
+  roles:
+    - roles/
