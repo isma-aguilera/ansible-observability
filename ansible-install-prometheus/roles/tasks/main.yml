@@ -20,22 +20,22 @@
     owner: prometheus
     group: prometheus
 
-- name: Extraer instalador.
+- name: Descargar y extraer.
   unarchive:
-    src: {{ download_prometheus }}
+    src: '{{ prometheus-tar }}'
     dest: /tmp
     remote_src: yes
 
 - name: Copiar binarios promtool al /usr/local/bin
   copy:
-    src: /tmp/prometheus-2.34.0.linux-amd64/promtool
+    src: /tmp/prometheus-2.36.2.linux-amd64/promtool
     dest: /usr/local/bin/
     remote_src: yes
     mode: u+x,g+x,o+x
 
 - name: Copiar binarios prometheus al /usr/local/bin
   copy:
-    src: /tmp/prometheus-2.34.0.linux-amd64/prometheus
+    src: /tmp/prometheus-2.36.2.linux-amd64/prometheus
     dest: /usr/local/bin/
     remote_src: yes
     mode: u+x,g+x,o+x
@@ -68,7 +68,7 @@
       scrape_configs:
         - job_name: 'prometheus'
           static_configs:
-            - targets: ['localhost:9090','192.168.98.147:9100']
+            - targets: ['localhost:9090']
 
 - name: Cargar conf de servicio Prometheus.
   blockinfile:

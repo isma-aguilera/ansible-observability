@@ -6,7 +6,7 @@
     system: true
     create_home: no
 
-- name: Extraer.
+- name: Descargar y extraer.
   unarchive:
     src: '{{ node-exporter-tar }}'
     dest: /tmp

@@ -1,3 +1,4 @@
 ---
 # defaults file for roles
-grafana-rpm: grafana-enterprise-8.4.4-1.x86_64.rpm
+grafana-rpm: https://dl.grafana.com/oss/release/grafana-9.0.2-1.x86_64.rpm
+grafana: grafana-9.0.2-1.x86_64.rpm

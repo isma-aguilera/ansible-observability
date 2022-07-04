@@ -1,7 +1,14 @@
 ---
+- name: Descargar RPM.
+  get_url:
+    url: '{{ grafana-rpm }}'
+    dest: /tmp
+    mode: '0755'
+
+#Tambien se puede utilizar el modulo DNF.
 - name: Instalar Grafana.
   yum:
-    name: '{{ grafana-rpm }}'
+    name: /tmp/'{{ grafana }}'
     state: present
 
 - name: Iniciar servicios.
@@ -10,13 +17,19 @@
     state: started
     enabled: yes
 
- - name: Agregar permisos en el firewall.
-   firewalld:
-     port: 3000/tcp
-     permanent: yes
-     state: enabled
+- name: Agregar permisos en el firewall.
+  firewalld:
+    port: 3000/tcp
+    permanent: yes
+    state: enabled
 
- - name: Forzar cambios en el firewall.
-   systemd:
-     name: firewalld
-     state: reloaded
+- name: Forzar cambios en el firewall.
+  systemd:
+    name: firewalld
+    state: reloaded
+
+- name: Chequear que el puerto 3000 este disponible.
+  wait_for:
+    port: 3000
+    state: started
+    timeout: 10
